@@ -2009,9 +2009,9 @@ static void init_ham_decoding (void)
 				switch (pv & 0x30)
 				{
 				case 0x00: ham_lastcolor = colors_for_drawing.color_regs_aga[pv] & 0xffffff; break;
-				case 0x10: ham_lastcolor &= 0xFFFF00; ham_lastcolor |= (pv & 0xF) << 4; break;
-				case 0x20: ham_lastcolor &= 0x00FFFF; ham_lastcolor |= (pv & 0xF) << 20; break;
-				case 0x30: ham_lastcolor &= 0xFF00FF; ham_lastcolor |= (pv & 0xF) << 12; break;
+				case 0x10: ham_lastcolor &= 0xFFFF00; ham_lastcolor |= ((pv & 0xF) * 0x11); break;
+				case 0x20: ham_lastcolor &= 0x00FFFF; ham_lastcolor |= ((pv & 0xF) * 0x11) << 16; break;
+			        case 0x30: ham_lastcolor &= 0xFF00FF; ham_lastcolor |= ((pv & 0xF) * 0x11) << 8; break;
 				}
 			}
 		}
@@ -2067,9 +2067,9 @@ static void decode_ham (int pix, int stoppos, bool blank)
 				switch (pv & 0x30)
 				{
 				case 0x00: ham_lastcolor = colors_for_drawing.color_regs_aga[pv] & 0xffffff; break;
-				case 0x10: ham_lastcolor &= 0xFFFF00; ham_lastcolor |= (pv & 0xF) << 4; break;
-				case 0x20: ham_lastcolor &= 0x00FFFF; ham_lastcolor |= (pv & 0xF) << 20; break;
-				case 0x30: ham_lastcolor &= 0xFF00FF; ham_lastcolor |= (pv & 0xF) << 12; break;
+				case 0x10: ham_lastcolor &= 0xFFFF00; ham_lastcolor |= ((pv & 0xF) * 0x11); break;
+			        case 0x20: ham_lastcolor &= 0x00FFFF; ham_lastcolor |= ((pv & 0xF) * 0x11) << 16; break;
+				case 0x30: ham_lastcolor &= 0xFF00FF; ham_lastcolor |= ((pv & 0xF) * 0x11) << 8; break;
 				}
 				ham_linebuf[ham_decode_pixel++] = ham_lastcolor;
 			}
