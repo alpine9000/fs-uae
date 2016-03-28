@@ -58,6 +58,7 @@
 
 
 #ifdef USE_READLINE
+#include <readline.h>
 #include <wordexp.h>
 #include "history.h"
 #endif
@@ -1200,6 +1201,19 @@ static int real_main2 (int argc, TCHAR **argv)
 	return 0;
 }
 
+#ifdef USE_READLINE
+static TCHAR** readline_completion(const TCHAR *text, int start, int end)
+{
+  TCHAR **matches = (char**)NULL;
+  rl_completion_suppress_append = 1;
+  if (start != 0) {
+    matches = rl_completion_matches(text, debugger_symbols_generator);
+  }
+
+  return (matches);
+}
+#endif
+
 void real_main (int argc, TCHAR **argv)
 {
 	restart_program = 1;
@@ -1209,6 +1223,9 @@ void real_main (int argc, TCHAR **argv)
 	wordexp ("~/.fs-uae-debugger.history", &readline_exp_result, 0);
 	using_history ();
 	read_history (readline_exp_result.we_wordv[0]);
+#ifdef DEBUGGER_SYMBOLS
+	rl_attempted_completion_function = readline_completion;
+#endif
 #endif
 
 #ifdef DEBUGGER_SYMBOLS

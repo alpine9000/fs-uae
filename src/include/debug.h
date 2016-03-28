@@ -148,6 +148,9 @@ struct dma_rec
 #ifdef DEBUGGER_SYMBOLS
 extern void debugger_load_symbols(TCHAR* filename);
 extern TCHAR* debugger_symbol_string(uae_u32 address);
+extern TCHAR* debugger_symbol_label(uae_u32 address);
+extern TCHAR *debugger_symbols_generator(const char *text, int state);
+
 #endif
 
 #define DMA_EVENT_BLITIRQ 1

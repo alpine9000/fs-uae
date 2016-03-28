@@ -1732,7 +1732,11 @@ static uaecptr ShowEA (void *f, uaecptr pc, uae_u16 opcode, int reg, amodes mode
 			else
 				_stprintf (offtxt, _T("$%04x"), disp16);
 			addr = m68k_areg (regs, reg) + disp16;
+#ifdef DEBUGGER_SYMBOLS
+			_stprintf (buffer, _T("(A%d, %s) == $%s"), reg, offtxt, debugger_symbol_string(addr));
+#else
 			_stprintf (buffer, _T("(A%d, %s) == $%08x"), reg, offtxt, addr);
+#endif
 		}
 		break;
 	case Ad8r:
@@ -1762,21 +1766,38 @@ static uaecptr ShowEA (void *f, uaecptr pc, uae_u16 opcode, int reg, amodes mode
 			if (dp & 4) base += dispreg;
 
 			addr = base + outer;
+#ifdef DEBUGGER_SYMBOLS
+			_stprintf (buffer, _T("(%s%c%d.%c*%d+%d)+%d == $%s"), name,
+				dp & 0x8000 ? 'A' : 'D', (int)r, dp & 0x800 ? 'L' : 'W',
+				1 << ((dp >> 9) & 3),
+				disp, outer, debugger_symbol_string(addr));
+#else
 			_stprintf (buffer, _T("(%s%c%d.%c*%d+%d)+%d == $%08x"), name,
 				dp & 0x8000 ? 'A' : 'D', (int)r, dp & 0x800 ? 'L' : 'W',
 				1 << ((dp >> 9) & 3),
 				disp, outer, addr);
+#endif
 		} else {
 			addr = m68k_areg (regs, reg) + (uae_s32)((uae_s8)disp8) + dispreg;
+#ifdef DEBUGGER_SYMBOLS
+			_stprintf (buffer, _T("(A%d, %c%d.%c*%d, $%02x) == $%s"), reg,
+				dp & 0x8000 ? 'A' : 'D', (int)r, dp & 0x800 ? 'L' : 'W',
+				1 << ((dp >> 9) & 3), disp8, debugger_symbol_string(addr));
+#else
 			_stprintf (buffer, _T("(A%d, %c%d.%c*%d, $%02x) == $%08x"), reg,
 				dp & 0x8000 ? 'A' : 'D', (int)r, dp & 0x800 ? 'L' : 'W',
 				1 << ((dp >> 9) & 3), disp8, addr);
+#endif
 		}
 		break;
 	case PC16:
 		disp16 = get_iword_debug (pc); pc += 2;
 		addr += (uae_s16)disp16;
+#ifdef DEBUGGER_SYMBOLS
+		_stprintf (buffer, _T("(PC,$%04x) == $%s"), disp16 & 0xffff, debugger_symbol_string(addr));
+#else
 		_stprintf (buffer, _T("(PC,$%04x) == $%08x"), disp16 & 0xffff, addr);
+#endif
 		break;
 	case PC8r:
 		dp = get_iword_debug (pc); pc += 2;
@@ -1805,15 +1826,28 @@ static uaecptr ShowEA (void *f, uaecptr pc, uae_u16 opcode, int reg, amodes mode
 			if (dp & 4) base += dispreg;
 
 			addr = base + outer;
+#ifdef DEBUGGER_SYMBOLS
+			_stprintf (buffer, _T("(%s%c%d.%c*%d+%d)+%d == $%s"), name,
+				dp & 0x8000 ? 'A' : 'D', (int)r, dp & 0x800 ? 'L' : 'W',
+				1 << ((dp >> 9) & 3),
+				disp, outer, debugger_symbol_string(addr));
+#else
 			_stprintf (buffer, _T("(%s%c%d.%c*%d+%d)+%d == $%08x"), name,
 				dp & 0x8000 ? 'A' : 'D', (int)r, dp & 0x800 ? 'L' : 'W',
 				1 << ((dp >> 9) & 3),
 				disp, outer, addr);
+#endif
 		} else {
 			addr += (uae_s32)((uae_s8)disp8) + dispreg;
+#ifdef DEBUGGER_SYMBOLS
+			_stprintf (buffer, _T("(PC, %c%d.%c*%d, $%02x) == $%s"), dp & 0x8000 ? 'A' : 'D',
+				(int)r, dp & 0x800 ? 'L' : 'W',  1 << ((dp >> 9) & 3),
+				disp8, debugger_symbol_string(addr));
+#else
 			_stprintf (buffer, _T("(PC, %c%d.%c*%d, $%02x) == $%08x"), dp & 0x8000 ? 'A' : 'D',
 				(int)r, dp & 0x800 ? 'L' : 'W',  1 << ((dp >> 9) & 3),
 				disp8, addr);
+#endif
 		}
 		break;
 	case absw:
@@ -1823,7 +1857,11 @@ static uaecptr ShowEA (void *f, uaecptr pc, uae_u16 opcode, int reg, amodes mode
 		break;
 	case absl:
 		addr = get_ilong_debug (pc);
+#ifdef DEBUGGER_SYMBOLS
+		_stprintf (buffer, _T("$%s"), debugger_symbol_string(addr));
+#else
 		_stprintf (buffer, _T("$%08x"), addr);
+#endif
 		pc += 4;
 		break;
 	case imm:
@@ -5797,7 +5835,7 @@ void m68k_disasm_2 (TCHAR *buf, int bufsize, uaecptr pc, uaecptr *nextpc, int cn
 		for (lookup = lookuptab;lookup->mnemo != dp->mnemo; lookup++)
 			;
 #ifdef DEBUGGER_SYMBOLS
-		buf = buf_out (buf, &bufsize, _T("%s "), debugger_symbol_string(pc));
+		buf = buf_out (buf, &bufsize, _T("%s "), debugger_symbol_label(pc));
 #else
 		buf = buf_out (buf, &bufsize, _T("%08X "), pc);
 #endif
@@ -6043,21 +6081,42 @@ void m68k_disasm_2 (TCHAR *buf, int bufsize, uaecptr pc, uaecptr *nextpc, int cn
 				*deaddr = pc;
 			if ((opcode & 0xf000) == 0xf000) {
 				if (fpp_cond(dp->cc)) {
+#ifdef DEBUGGER_SYMBOLS
+					buf = buf_out(buf, &bufsize, _T(" == $%s (T)"), debugger_symbol_string(addr2));
+#else
 					buf = buf_out(buf, &bufsize, _T(" == $%08x (T)"), addr2);
+#endif
 				} else {
+#ifdef DEBUGGER_SYMBOLS
+					buf = buf_out(buf, &bufsize, _T(" == $%s (F)"), debugger_symbol_string(addr2));
+#else
 					buf = buf_out(buf, &bufsize, _T(" == $%08x (F)"), addr2);
+#endif
 				}
 			} else {
 				if (cctrue (dp->cc)) {
+#ifdef DEBUGGER_SYMBOLS
+					buf = buf_out (buf, &bufsize, _T(" == $%s (T)"), debugger_symbol_string(addr2));
+#else
 					buf = buf_out (buf, &bufsize, _T(" == $%08x (T)"), addr2);
+#endif
+
 				} else {
+#ifdef DEBUGGER_SYMBOLS
+					buf = buf_out (buf, &bufsize, _T(" == $%s (F)"), debugger_symbol_string(addr2));
+#else
 					buf = buf_out (buf, &bufsize, _T(" == $%08x (F)"), addr2);
+#endif
 				}
 			}
 		} else if ((opcode & 0xff00) == 0x6100) { /* BSR */
 			if (deaddr)
 				*deaddr = pc;
+#ifdef DEBUGGER_SYMBOLS
+			buf = buf_out (buf, &bufsize, _T(" == $%s"), debugger_symbol_string(seaddr2));
+#else
 			buf = buf_out (buf, &bufsize, _T(" == $%08x"), seaddr2);
+#endif
 		}
 		buf = buf_out (buf, &bufsize, _T("\n"));
 

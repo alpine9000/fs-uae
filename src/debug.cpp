@@ -152,6 +152,48 @@ TCHAR* debugger_symbol_string(uae_u32 address)
 
 	return string;
 }
+
+TCHAR* debugger_symbol_label(uae_u32 address)
+{
+	static TCHAR string[DEBUGGER_MAX_SYMBOL_LEN+12];
+	debugger_symbol_lookup_t* symbol = debugger_get_symbol (address);
+	if (symbol) {
+		sprintf (string, "%s:\n%08X", symbol->name, address);
+	} else {
+		sprintf (string, "%08X", address);
+	}
+
+	return string;
+}
+
+static TCHAR * _dupstr (char* s)
+{
+	TCHAR *r;
+	r = xmalloc (TCHAR, strlen (s) + 1);
+	strcpy (r, s);
+	return (r);
+}
+
+TCHAR *debugger_symbols_generator(const char *text, int state)
+{
+	static int list_index, len;
+	TCHAR *name;
+
+	if (!state) {
+		list_index = 0;
+		len = strlen (text);
+	}
+
+	while (list_index < DEBUGGER_MAX_SYMBOLS && (name = debugger_symbol_lookup[list_index].name))  {
+		list_index++;
+		if (strncmp (name, text, len) == 0)
+			return (_dupstr(name));
+	}
+
+	return ((TCHAR *)NULL);
+}
+
+
 #endif
 
 void deactivate_debugger (void)
