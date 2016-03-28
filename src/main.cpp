@@ -1211,6 +1211,14 @@ void real_main (int argc, TCHAR **argv)
 	read_history (readline_exp_result.we_wordv[0]);
 #endif
 
+#ifdef DEBUGGER_SYMBOLS
+	if (argc == 2) {
+		wordexp_t exp_result;
+		wordexp (argv[1], &exp_result, 0);
+		debugger_load_symbols(exp_result.we_wordv[0]);
+	}
+#endif
+
 	fetch_configurationpath (restart_config, sizeof (restart_config) / sizeof (TCHAR));
 	_tcscat (restart_config, OPTIONSFILENAME);
 	default_config = 1;

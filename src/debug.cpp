@@ -84,6 +84,76 @@ static uaecptr debug_copper_pc;
 extern int audio_channel_mask;
 extern int inputdevice_logging;
 
+#ifdef DEBUGGER_SYMBOLS
+
+#define DEBUGGER_MAX_SYMBOLS 1024
+#define DEBUGGER_MAX_SYMBOL_LEN 256
+
+typedef struct {
+	TCHAR name[DEBUGGER_MAX_SYMBOL_LEN];
+	uae_u32 address;
+} debugger_symbol_lookup_t;
+
+static debugger_symbol_lookup_t debugger_symbol_lookup[DEBUGGER_MAX_SYMBOLS];
+static uae_u32 debugger_symbol_lookup_index = 0;
+
+void debugger_load_symbols(TCHAR* filename)
+{
+	FILE* fp = fopen(filename, "r");
+
+	if (!fp) {
+		return;
+	}
+
+	while (debugger_symbol_lookup_index < DEBUGGER_MAX_SYMBOLS &&
+	       fscanf(fp, "%s 0x%x",
+		      &debugger_symbol_lookup[debugger_symbol_lookup_index].name,
+		      &debugger_symbol_lookup[debugger_symbol_lookup_index].address) == 2) {
+		for (int i = 0; i < DEBUGGER_MAX_SYMBOL_LEN; i++) {
+			if (debugger_symbol_lookup[debugger_symbol_lookup_index].name[i] == ':') {
+				debugger_symbol_lookup[debugger_symbol_lookup_index].name[i] = 0;
+			}
+		}
+		debugger_symbol_lookup_index++;
+	}
+
+	fclose (fp);
+}
+
+static debugger_symbol_lookup_t* read_debugger_symbol(TCHAR **c, uae_u32 *valp)
+{
+	for (int i = 0; i < debugger_symbol_lookup_index; i++) {
+		if (strcmp(debugger_symbol_lookup[i].name, *c) == 0) {
+			return &debugger_symbol_lookup[i];
+		}
+	}
+	return 0;
+}
+
+static debugger_symbol_lookup_t* debugger_get_symbol(uae_u32 address)
+{
+	for (int i = 0; i < debugger_symbol_lookup_index; i++) {
+		if (debugger_symbol_lookup[i].address == address) {
+			return &debugger_symbol_lookup[i];
+		}
+	}
+	return 0;
+}
+
+TCHAR* debugger_symbol_string(uae_u32 address)
+{
+	static char string[DEBUGGER_MAX_SYMBOL_LEN+12];
+	debugger_symbol_lookup_t* symbol = debugger_get_symbol (address);
+	if (symbol) {
+		sprintf (string, "%08x (%s)", address, symbol->name);
+	} else {
+		sprintf (string, "%08x", address);
+	}
+
+	return string;
+}
+#endif
+
 void deactivate_debugger (void)
 {
 	debugger_active = 0;
@@ -455,6 +525,16 @@ static bool readhexx (TCHAR **c, uae_u32 *valp)
 	TCHAR nc;
 
 	ignore_ws (c);
+
+#ifdef DEBUGGER_SYMBOLS
+	debugger_symbol_lookup_t* symbol;
+	if ((symbol = read_debugger_symbol(c, valp)) != NULL) {
+		*valp = symbol->address;
+		for (; **c != 0; (*c)++);
+		return true;
+	}
+#endif
+
 	if (!isxdigit (peekchar (c)))
 		return false;
 	while (isxdigit (nc = **c)) {
@@ -3668,7 +3748,11 @@ int instruction_breakpoint (TCHAR **c)
 				bpn = &bpnodes[i];
 				if (!bpn->enabled)
 					continue;
+#ifdef DEBUGGER_SYMBOLS
+				console_out_f (_T("%8s "), debugger_symbol_string(bpn->addr));
+#else
 				console_out_f (_T("%8X "), bpn->addr);
+#endif
 				got = 1;
 			}
 			if (!got)
@@ -4786,7 +4870,16 @@ void debug (void)
 					continue;
 				if (bpnodes[i].addr == pc) {
 					bp = 1;
+#ifdef DEBUGGER_SYMBOLS
+					debugger_symbol_lookup_t *symbol = debugger_get_symbol(pc);
+					if (symbol) {
+						console_out_f (_T("Breakpoint at %08X (%s)\n"), pc, symbol->name);
+					} else {
+						console_out_f (_T("Breakpoint at %08X\n"), pc);
+					}
+#else
 					console_out_f (_T("Breakpoint at %08X\n"), pc);
+#endif
 					break;
 				}
 			}

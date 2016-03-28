@@ -655,6 +655,8 @@ DIS_FEATURE([FS_EMU_DRIVERS], [drivers], [drivers],
             [multiple driver backends (experimental)])
 OPT_FEATURE([GFXBOARD], [gfxboard], [gfxboard],
             [GFX hardware boards])
+DIS_FEATURE([DEBUGGER_SYMBOLS], [debug_symbols], [debug-symbols],
+            [suport loading debugger symbols])
 AC_ARG_ENABLE([jit], [AS_HELP_STRING([--disable-jit], [JIT compiler])])
 AS_IF([test "x$enable_jit" != xno], [
     AC_TRY_COMPILE([

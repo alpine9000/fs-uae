@@ -1,4 +1,7 @@
 #include <fs/filesys.h>
+#ifdef DEBUGGER_SYMBOLS
+#include <fs/conf.h>
+#endif
 #include "sysconfig.h"
 #include "sysdeps.h"
 
@@ -309,6 +312,15 @@ void amiga_main() {
             strdup("fs-uae"),
             NULL,
     };
+
+#ifdef DEBUGGER_SYMBOLS
+    const char* debugsymbols = fs_config_get_const_string("debugsymbols");
+    if (debugsymbols) {
+	argv[1] = (char*)debugsymbols;
+	argc++;
+    }
+#endif
+
     real_main(argc, argv);
 #ifdef FILESYS
     write_log("real_main returned\n");

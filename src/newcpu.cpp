@@ -5796,8 +5796,11 @@ void m68k_disasm_2 (TCHAR *buf, int bufsize, uaecptr pc, uaecptr *nextpc, int cn
 		}
 		for (lookup = lookuptab;lookup->mnemo != dp->mnemo; lookup++)
 			;
-
+#ifdef DEBUGGER_SYMBOLS
+		buf = buf_out (buf, &bufsize, _T("%s "), debugger_symbol_string(pc));
+#else
 		buf = buf_out (buf, &bufsize, _T("%08X "), pc);
+#endif
 
 		pc += 2;
 		
@@ -6239,7 +6242,11 @@ void m68k_dumpstate (uaecptr pc, uaecptr *nextpc)
 	if (pc != 0xffffffff) {
 		m68k_disasm (pc, nextpc, 1);
 		if (nextpc)
+#ifdef DEBUGGER_SYMBOLS
+			console_out_f (_T("Next PC: %s\n"), debugger_symbol_string(*nextpc));
+#else
 			console_out_f (_T("Next PC: %08x\n"), *nextpc);
+#endif
 	}
 }
 void m68k_dumpstate (uaecptr *nextpc)
