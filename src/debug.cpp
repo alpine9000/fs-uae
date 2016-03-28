@@ -51,6 +51,11 @@
 #undef _WIN32
 #endif
 
+#ifdef USE_READLINE
+#include "readline.h"
+#include "history.h"
+#endif
+
 int debugger_active;
 static uaecptr skipaddr_start, skipaddr_end;
 static int skipaddr_doskip;
@@ -4684,6 +4689,25 @@ static void debug_1 (void)
 		if (!debugger_active)
 			return;
 		update_debug_info ();
+		#ifdef USE_READLINE
+		char* line = readline(">");
+		if (line) {
+		  if (*line) {
+		    add_history (line);
+		    if (debug_line (line))
+		      return;
+		  } else {
+		    HIST_ENTRY* he = history_get (history_length);
+		    if (he) {
+		      if (debug_line (he->line))
+			return;
+		    }
+		    continue;
+		  }
+		} else {
+		  return;
+		}
+		#else
 		console_out (_T(">"));
 		console_flush ();
 		debug_linecounter = 0;
@@ -4694,6 +4718,7 @@ static void debug_1 (void)
 			continue;
 		if (debug_line (input))
 			return;
+		#endif
 	}
 }
 

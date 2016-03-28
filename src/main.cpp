@@ -56,6 +56,12 @@
 #include "SDL.h"
 #endif
 
+
+#ifdef USE_READLINE
+#include <wordexp.h>
+#include "history.h"
+#endif
+
 long int version = 256 * 65536L * UAEMAJOR + 65536L * UAEMINOR + UAESUBREV;
 
 struct uae_prefs currprefs, changed_prefs;
@@ -1126,6 +1132,7 @@ static int real_main2 (int argc, TCHAR **argv)
 	logging_init (); /* Yes, we call this twice - the first case handles when the user has loaded
 						 a config using the cmd-line.  This case handles loads through the GUI. */
 
+
 #ifdef NATMEM_OFFSET
 	init_shm ();
 #endif
@@ -1197,9 +1204,17 @@ void real_main (int argc, TCHAR **argv)
 {
 	restart_program = 1;
 
+#ifdef USE_READLINE
+	wordexp_t readline_exp_result;
+	wordexp ("~/.fs-uae-debugger.history", &readline_exp_result, 0);
+	using_history ();
+	read_history (readline_exp_result.we_wordv[0]);
+#endif
+
 	fetch_configurationpath (restart_config, sizeof (restart_config) / sizeof (TCHAR));
 	_tcscat (restart_config, OPTIONSFILENAME);
 	default_config = 1;
+
 
 	while (restart_program) {
 		int ret;
@@ -1210,6 +1225,10 @@ void real_main (int argc, TCHAR **argv)
 		leave_program ();
 		quit_program = 0;
 	}
+
+#ifdef USE_READLINE
+	write_history (readline_exp_result.we_wordv[0]);
+#endif
 	zfile_exit ();
 }
 

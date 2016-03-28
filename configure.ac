@@ -275,6 +275,13 @@ PKG_CHECK_MODULES([ZLIB], [zlib], [
 	AC_SUBST([ZLIB_LIBS])
 ])
 
+AC_ARG_WITH(readline, AS_HELP_STRING(
+    [--with-readline], [use readline for console debugger]))
+AS_IF([test "x$with_readline" = xyes], [
+    AC_DEFINE([USE_READLINE], [1], [Define to 1 to use readline])
+    PKG_CHECK_MODULES([READLINE], [readline])
+])
+
 AC_CHECK_LIB([Winmm], [main])
 
 AC_CHECK_LIB([Ws2_32], [main])
