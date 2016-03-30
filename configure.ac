@@ -320,7 +320,8 @@ AS_CASE([$host_os],
     OS_NAME_2="Mac OS X"
     OS_CPPFLAGS="-DMACOSX"
     LOADABLE_MODULE_EXT=".so"
-    OS_LDFLAGS="-headerpad_max_install_names -pagezero_size 0x2000 -rpath @executable_path/../Frameworks"
+    #OS_LDFLAGS="-headerpad_max_install_names -pagezero_size 0x2000 -rpath @executable_path/../Frameworks"
+    OS_LDFLAGS="-headerpad_max_install_names -pagezero_size 0x2000"
 ],
 [freebsd*], [
     OS_NAME="freebsd"
