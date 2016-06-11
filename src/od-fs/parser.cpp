@@ -136,6 +136,26 @@ static void parallel_tcp_close(void)
 	uae_log("TCP: Parallel listener socket closed\n");
 }
 
+void parallel_ack(void)
+{
+	if (0) {
+#ifdef WITH_VPAR
+	} else if (vpar_enabled()) {
+		/* Do nothing, acking is instead done via parallel_poll_ack. */
+#endif
+	} else {
+		cia_parallelack();
+	}
+}
+
+void parallel_poll_ack(void)
+{
+#ifdef WITH_VPAR
+	vpar_update();
+#endif
+}
+
+
 void parallel_exit(void)
 {
 	parallel_tcp_close();

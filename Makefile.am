@@ -237,6 +237,7 @@ libuae_a_SOURCES = \
 	src/crc32.cpp \
 	src/custom.cpp \
 	src/debug.cpp \
+	src/debuginfo.cpp \
 	src/def_icons.cpp \
 	src/devices.cpp \
 	src/disk.cpp \
@@ -415,6 +416,7 @@ libuae_a_SOURCES = \
 	src/include/uae/caps.h \
 	src/include/uae/cdrom.h \
 	src/include/uae/cycleunit.h \
+	src/include/uae/debuginfo.h \
 	src/include/uae/dlopen.h \
 	src/include/uae/endian.h \
 	src/include/uae/enum.h \
@@ -430,8 +432,10 @@ libuae_a_SOURCES = \
 	src/include/uae/memory.h \
 	src/include/uae/mman.h \
 	src/include/uae/parser.h \
+	src/include/uae/patch.h \
 	src/include/uae/ppc.h \
 	src/include/uae/qemu.h \
+	src/include/uae/segtracker.h \
 	src/include/uae/seh.h \
 	src/include/uae/slirp.h \
 	src/include/uae/socket.h \
@@ -551,6 +555,7 @@ libuae_a_SOURCES = \
 	src/od-win32/picasso96_win.h \
 	src/od-win32/serial_win32.cpp \
 	src/od-win32/win32_uaenet.cpp \
+	src/patch.cpp \
 	src/pci.cpp \
 	src/ppc/pixman-stubs.cpp \
 	src/ppc/ppc.cpp \
@@ -586,6 +591,7 @@ libuae_a_SOURCES = \
 	src/scsi.cpp \
 	src/scsiemul.cpp \
 	src/scsitape.cpp \
+	src/segtracker.cpp \
 	src/slirp_uae.cpp \
 	src/specialmonitors.cpp \
 	src/statusline.cpp \
@@ -1183,7 +1189,7 @@ EXTRA_DIST = $(TESTS) $(EXTRA_TESTS) \
 	debian/source/format \
 	dist/linux/build.py \
 	dist/arch.py \
-	dist/linux/standalone.py \
+	dist/linux/standalone-linux.py \
 	dist/macosx/fs-uae-config.icns \
 	dist/macosx/fs-uae.icns \
 	dist/macosx/PkgInfo \
@@ -1306,12 +1312,14 @@ catalogs = \
 	share/locale/cs/LC_MESSAGES/fs-uae.mo \
 	share/locale/da/LC_MESSAGES/fs-uae.mo \
 	share/locale/de/LC_MESSAGES/fs-uae.mo \
-	share/locale/el/LC_MESSAGES/fs-uae.mo \
+	share/locale/eo/LC_MESSAGES/fs-uae.mo \
 	share/locale/es/LC_MESSAGES/fs-uae.mo \
 	share/locale/fi/LC_MESSAGES/fs-uae.mo \
 	share/locale/fr/LC_MESSAGES/fs-uae.mo \
+	share/locale/hu/LC_MESSAGES/fs-uae.mo \
 	share/locale/it/LC_MESSAGES/fs-uae.mo \
 	share/locale/nb/LC_MESSAGES/fs-uae.mo \
+	share/locale/nl/LC_MESSAGES/fs-uae.mo \
 	share/locale/pl/LC_MESSAGES/fs-uae.mo \
 	share/locale/pt/LC_MESSAGES/fs-uae.mo \
 	share/locale/pt_BR/LC_MESSAGES/fs-uae.mo \
@@ -1331,9 +1339,9 @@ share/locale/de/LC_MESSAGES/fs-uae.mo: po/de.po
 	mkdir -p share/locale/de/LC_MESSAGES
 	$(MSGFMT) --verbose $(s)/po/de.po -o $@
 
-share/locale/el/LC_MESSAGES/fs-uae.mo: po/el.po
-	mkdir -p share/locale/el/LC_MESSAGES
-	$(MSGFMT) --verbose $(s)/po/el.po -o $@
+share/locale/eo/LC_MESSAGES/fs-uae.mo: po/eo.po
+	mkdir -p share/locale/eo/LC_MESSAGES
+	$(MSGFMT) --verbose $(s)/po/eo.po -o $@
 
 share/locale/es/LC_MESSAGES/fs-uae.mo: po/es.po
 	mkdir -p share/locale/es/LC_MESSAGES
@@ -1347,6 +1355,10 @@ share/locale/fr/LC_MESSAGES/fs-uae.mo: po/fr.po
 	mkdir -p share/locale/fr/LC_MESSAGES
 	$(MSGFMT) --verbose $(s)/po/fr.po -o $@
 
+share/locale/hu/LC_MESSAGES/fs-uae.mo: po/hu.po
+	mkdir -p share/locale/hu/LC_MESSAGES
+	$(MSGFMT) --verbose $(s)/po/hu.po -o $@
+
 share/locale/it/LC_MESSAGES/fs-uae.mo: po/it.po
 	mkdir -p share/locale/it/LC_MESSAGES
 	$(MSGFMT) --verbose $(s)/po/it.po -o $@
@@ -1354,6 +1366,10 @@ share/locale/it/LC_MESSAGES/fs-uae.mo: po/it.po
 share/locale/nb/LC_MESSAGES/fs-uae.mo: po/nb.po
 	mkdir -p share/locale/nb/LC_MESSAGES
 	$(MSGFMT) --verbose $(s)/po/nb.po -o $@
+
+share/locale/nl/LC_MESSAGES/fs-uae.mo: po/nl.po
+	mkdir -p share/locale/nl/LC_MESSAGES
+	$(MSGFMT) --verbose $(s)/po/nl.po -o $@
 
 share/locale/pl/LC_MESSAGES/fs-uae.mo: po/pl.po
 	mkdir -p share/locale/pl/LC_MESSAGES
@@ -1393,14 +1409,14 @@ install-data-hook: mo fs-uae.dat
 	mkdir -p $(DESTDIR)$(datadir)/applications
 	cp -R $(s)/share/applications/* $(DESTDIR)$(datadir)/applications
 	mkdir -p $(DESTDIR)$(datadir)/fs-uae
-	cp -R $(s)/share/fs-uae/* $(DESTDIR)$(datadir)/fs-uae
+	touch $(DESTDIR)$(datadir)/fs-uae/share-dir
+	cp fs-uae.dat $(DESTDIR)$(datadir)/fs-uae
 	mkdir -p $(DESTDIR)$(datadir)/icons
 	cp -R $(s)/share/icons/* $(DESTDIR)$(datadir)/icons
 	mkdir -p $(DESTDIR)$(datadir)/locale
 	cp -R $(b)/share/locale/* $(DESTDIR)$(datadir)/locale
 	mkdir -p $(DESTDIR)$(datadir)/mime
 	cp -R $(s)/share/mime/* $(DESTDIR)$(datadir)/mime
-	cp fs-uae.dat $(DESTDIR)$(datadir)/fs-uae
 
 uninstall-local:
 	rm -f $(DESTDIR)$(datadir)/applications/fs-uae.desktop

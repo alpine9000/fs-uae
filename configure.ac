@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.67])
-AC_INIT([FS-UAE], [2.7.9dev],
+AC_INIT([FS-UAE], [2.7.14dev2],
         [frode@fs-uae.net], [fs-uae], [http://fs-uae.net])
 AC_CONFIG_AUX_DIR([.])
 AC_CANONICAL_HOST
@@ -712,6 +712,8 @@ OPT_FEATURE([SAVESTATE], [savestate], [savestate],
             [save state support])
 OPT_FEATURE([SCP], [scp], [scp],
             [SuperCardPro floppy image support])
+OPT_FEATURE([WITH_SEGTRACKER], [segtracker], [segtracker],
+            [segtracker support in debugger])
 OPT_FEATURE([SERIAL_PORT], [serial_port], [serial-port],
             [serial port emulation])
 OPT_FEATURE([WITH_SLIRP], [slirp], [slirp],

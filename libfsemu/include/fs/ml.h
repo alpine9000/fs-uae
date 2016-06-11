@@ -49,12 +49,15 @@ typedef struct fs_ml_video_mode {
 void fs_ml_show_cursor(int show, int immediate);
 bool fs_ml_mouse_integration(void);
 bool fs_ml_cursor_allowed(void);
+int fs_ml_first_mouse_index(void);
 
 bool fs_ml_input_grab(void);
 void fs_ml_set_input_grab(bool grab);
 
 bool fs_ml_automatic_input_grab(void);
 void fs_ml_set_input_grab_on_activate(bool grab);
+
+GList *fs_ml_input_list_custom_keyboards(void);
 
 void fs_ml_activate_window_switcher(void);
 
