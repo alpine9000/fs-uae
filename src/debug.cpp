@@ -5024,7 +5024,7 @@ static void debug_1 (void)
 		  } else {
 		    HIST_ENTRY* he = history_get (history_length);
 		    if (he) {
-		      if (debug_line (he->line))
+		      if (debug_line ((TCHAR*)he->line))
 			return;
 		    }
 		    continue;
