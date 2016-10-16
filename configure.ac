@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.67])
-AC_INIT([FS-UAE], [2.7.14dev2],
+AC_INIT([FS-UAE], [2.7.16dev],
         [frode@fs-uae.net], [fs-uae], [http://fs-uae.net])
 AC_CONFIG_AUX_DIR([.])
 AC_CANONICAL_HOST
@@ -14,6 +14,7 @@ AC_CONFIG_HEADERS([config.h])
 # AC_CONFIG_MACRO_DIRS([m4])
 m4_include([m4/ax_c___builtin_expect.m4])
 m4_include([m4/ax_check_compile_flag.m4])
+m4_include([m4/ax_check_link_flag.m4])
 m4_include([m4/ax_gcc_var_attribute.m4])
 m4_include([m4/ax_gcc_func_attribute.m4])
 
@@ -87,7 +88,7 @@ AS_IF([test "x$enable_static" = xyes],
       [PKG_CONFIG="$PKG_CONFIG --static"])
 
 
-# Compiler flags
+# Compiler / linker feature checks
 
 AX_CHECK_COMPILE_FLAG(-fno-strict-overflow,
 [f_no_strict_overflow=yes],
@@ -119,7 +120,11 @@ AX_CHECK_COMPILE_FLAG(-Wmissing-format-attribute,
 AM_CONDITIONAL([W_MISSING_FORMAT_ATTRIBUTE],
 [test x$w_missing_format_attribute = xyes])
 
-# Compiler features
+AX_CHECK_LINK_FLAG(-no-pie,
+[no_pie=yes],
+[no_pie=no])
+AM_CONDITIONAL([NO_PIE],
+[test x$no_pie = xyes])
 
 AX_C___BUILTIN_EXPECT
 
@@ -158,9 +163,16 @@ AC_CHECK_LIB([Iphlpapi], [main])
 
 AM_CONDITIONAL([BUILTIN_GLEE], [false])
 
+AC_ARG_WITH(glad, AS_HELP_STRING(
+    [--without-glad], [use GLAD OpenGL loader]))
+AS_IF([test "x$with_glad" != xno], [
+    AC_DEFINE([WITH_GLAD], [1], [Define to 1 to use GLAD])
+])
+AM_CONDITIONAL([WITH_GLAD], [test x$with_glad != xno])
+
 AC_ARG_WITH(glew, AS_HELP_STRING(
-    [--without-glew], [do not use GLEW library]))
-AS_IF([test "x$with_glew" != xno], [
+    [--with-glew], [use GLEW library]))
+AS_IF([test "x$with_glew" = xyes], [
     PKG_CHECK_MODULES([GLEW], [glew])
     AC_DEFINE([WITH_GLEW], [1], [Define to 1 to use GLEW])
 ])
@@ -322,6 +334,9 @@ AS_CASE([$host_os],
     OS_NAME="macosx"
     OS_NAME_2="Mac OS X"
     OS_NAME_3="OSX"
+    # OS_NAME="macos"
+    # OS_NAME_2="MacOS"
+    # OS_NAME_3="MacOS"
     OS_CPPFLAGS="-DMACOSX"
     LOADABLE_MODULE_EXT=".so"
     #OS_LDFLAGS="-headerpad_max_install_names -pagezero_size 0x2000 -rpath @executable_path/../Frameworks"
@@ -688,6 +703,9 @@ AS_IF([test "x$enable_jit" != xno], [
         fi
     ])
 ])
+AM_CONDITIONAL([JIT],
+[test x$enable_jit != xno])
+
 OPT_FEATURE([USE_JIT_FPU], [jit_fpu], [jit-fpu],
             [JIT compilation of FPU instructions])
 DIS_FEATURE([WITH_LUA], [lua], [lua],

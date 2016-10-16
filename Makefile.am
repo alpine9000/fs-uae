@@ -69,6 +69,12 @@ AM_LDFLAGS =
 # AM_LDFLAGS += -rdynamic
 AM_LDFLAGS += @OS_LDFLAGS@
 
+if JIT
+if NO_PIE
+AM_LDFLAGS += -no-pie
+endif
+endif
+
 if STATIC_BUILD
 AM_LDFLAGS += -static
 AM_CPPFLAGS += -DGLEW_STATIC
@@ -805,6 +811,15 @@ libmanymouse_a_SOURCES = \
 	manymouse/x11_xinput2.c
 endif
 
+if WITH_GLAD
+noinst_LIBRARIES += libglad.a
+AM_CPPFLAGS += -I$(s)/glad/include
+fs_uae_LDADD += libglad.a
+fs_uae_device_helper_LDADD += libglad.a
+libglad_a_SOURCES = \
+	glad/src/glad.c
+endif
+
 if WITH_PEARPC_CPU
 noinst_LIBRARIES += libpearpc.a
 AM_CPPFLAGS += -I$(s)/src/ppc/pearpc
@@ -1209,6 +1224,9 @@ EXTRA_DIST = $(TESTS) $(EXTRA_TESTS) \
 	flac/include/FLAC/stream_encoder.h \
 	fs-uae.spec \
 	icon/fs-uae.ico \
+	glad/include/glad/glad.h \
+	glad/include/KHR/khrplatform.h \
+	glad/LICENSE \
 	libinih/ini.c \
 	libinih/ini.h \
 	libinih/LICENSE.txt \

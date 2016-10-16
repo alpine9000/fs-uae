@@ -222,7 +222,8 @@ void fs_uae_process_input_event(int line, int action, int state, int playback)
 
 int g_fs_uae_frame = 0;
 
-static int input_handler_loop(int line) {
+static int input_handler_loop(int line)
+{
     static int last_frame = -1;
     if (g_fs_uae_frame != last_frame) {
         // only run this for the first input handler loop per frame
@@ -231,6 +232,9 @@ static int input_handler_loop(int line) {
 #endif
         last_frame = g_fs_uae_frame;
     }
+
+    // FIXME: Move to another place?
+    uae_clipboard_update();
 
     int action;
     //int reconfigure_input = 0;
@@ -527,6 +531,9 @@ static void on_init()
     }
     if (fs_config_get_int("min_first_line_ntsc") != FS_CONFIG_NONE) {
         amiga_set_min_first_line(fs_config_get_int("min_first_line_ntsc"), 1);
+    }
+    if (fs_config_is_true(OPTION_CLIPBOARD_SHARING)) {
+        amiga_set_option("clipboard_sharing", "yes");
     }
 
     /*
@@ -1126,6 +1133,15 @@ int main(int argc, char *argv[])
     fs_log("\n");
 
     configure_logging(fs_config_get_const_string("log"));
+
+    fs_log("[GLIB] Version %d.%d.%d (Compiled against %d.%d.%d)\n",
+           glib_major_version, glib_minor_version, glib_micro_version,
+           GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION);
+#if 0
+    fs_log("[GLIB] Using system malloc: %s\n",
+           g_mem_is_system_malloc() ? "Yes" : "No");
+#endif
+
     fs_emu_set_state_check_function(amiga_get_state_checksum);
     fs_emu_set_rand_check_function(amiga_get_rand_checksum);
 
