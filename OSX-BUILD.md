@@ -136,6 +136,7 @@
     # cd libmpeg2-0.5.1
     # ./configure --prefix=/usr/local
     # make -j4
+```
 
 14. fs-uae
     ```
