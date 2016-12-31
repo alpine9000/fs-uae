@@ -367,11 +367,15 @@ void fixup_prefs (struct uae_prefs *p)
 			p->custom_memory_sizes[1] = p->cpuboardmem1_size / 2;
 			p->custom_memory_addrs[0] = 0x18000000 - p->custom_memory_sizes[0];
 			p->custom_memory_addrs[1] = 0x18000000;
+			p->custom_memory_mask[0] = 0x10000000;
+			p->custom_memory_mask[1] = 0x18000000;
 		} else {
 			p->custom_memory_sizes[0] = p->cpuboardmem1_size;
 			p->custom_memory_sizes[1] = 0;
 			p->custom_memory_addrs[0] = 0x18000000 - p->custom_memory_sizes[0];
 			p->custom_memory_addrs[1] = 0;
+			p->custom_memory_mask[0] = 0x10000000;
+			p->custom_memory_mask[1] = 0;
 		}
 	}
 
@@ -736,6 +740,7 @@ void fixup_prefs (struct uae_prefs *p)
 
 	built_in_chipset_prefs (p);
 	blkdev_fix_prefs (p);
+	inputdevice_fix_prefs(p);
 	target_fixup_options (p);
 }
 

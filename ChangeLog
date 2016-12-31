@@ -1,3 +1,34 @@
+Version 2.9.3dev:
+
+* Allow specifying sub_title = 0 to disable the sub title.
+
+Version 2.9.2dev:
+
+* New boolean option warp_mode (warp_mode = 1 to start in warp mode).
+* Try ralphschmidt-cyberstorm-ppc-4471.rom if cyberstormppc.rom is not found.
+* Imported updated translations from crowdin.com.
+
+Version 2.9.1dev:
+
+* Configure now fails if zip or msgfmt is not found on path.
+* Added xinput_controller_11_6_1_0_windows.
+* GUI warning when running with llvmpipe software renderer.
+* Fixed caps lock.
+* Fix loading of bundled gamepad configs for macOS.
+* Fix decoding on non-ascii %-escaped file names on directory HDs.
+* Fixed loading compressed resources from fs-uae.dat on big-endian CPU.
+* Fix compilation with --disable-jit.
+
+Version 2.9.0dev:
+
+* Fix mouse input on Windows with raw keyboard input enabled.
+* Alt+F4 and Cmd+Q will no longer quit FS-UAE (in full keyboard emulation mode).
+* Use raw input on Windows again (allows grabbing of Windows keys, etc).
+* New option raw_input = 0 will disable use of raw input for keyboard.
+* Fixed loading shaders from fs-uae.dat.
+* Updated Xbox 360 configs for Linux.
+* Updated emulation core from WinUAE 3300b2.
+
 Version 2.7.16dev:
 
 * Add -no-pie (unless JIT is explicitly disabled) if supported by linker.
