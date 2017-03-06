@@ -1,4 +1,5 @@
 1. gcc osx (if you don't have gcc)
+    ```
     cd downloads
     curl -OL http://mirrors.concertpass.com/gcc/releases/gcc-6.3.0/gcc-6.3.0.tar.gz
     cd ../builds
