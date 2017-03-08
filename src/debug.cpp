@@ -88,7 +88,7 @@ extern int inputdevice_logging;
 
 #ifdef DEBUGGER_SYMBOLS
 
-#define DEBUGGER_MAX_SYMBOLS 1024
+#define DEBUGGER_MAX_SYMBOLS 1024*10
 #define DEBUGGER_MAX_SYMBOL_LEN 256
 
 typedef struct {
