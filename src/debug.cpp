@@ -168,6 +168,18 @@ TCHAR* debugger_symbol_label(uae_u32 address)
 	return string;
 }
 
+uae_u32 debugger_symbol_address(TCHAR* name)
+{
+      
+       for (int i = 0; i < debugger_symbol_lookup_index; i++) {
+               if (strcmp(debugger_symbol_lookup[i].name, name) == 0) {
+		       return debugger_symbol_lookup[i].address;
+	       }
+       }
+
+       return 0;
+}
+
 static TCHAR * _dupstr (char* s)
 {
 	TCHAR *r;

@@ -8,6 +8,7 @@
 #ifndef lualib_h
 #define lualib_h
 
+#define LUA_UNSAFE
 #include "lua.h"
 
 

@@ -153,6 +153,7 @@ struct dma_rec
 extern void debugger_load_symbols(TCHAR* filename);
 extern TCHAR* debugger_symbol_string(uae_u32 address);
 extern TCHAR* debugger_symbol_label(uae_u32 address);
+extern uae_u32 debugger_symbol_address(TCHAR* name);
 extern TCHAR *debugger_symbols_generator(const char *text, int state);
 
 #endif
