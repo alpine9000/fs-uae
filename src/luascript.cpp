@@ -30,11 +30,18 @@ static lua_State *g_states[MAX_LUA_STATES];
 static uae_sem_t lua_sem;
 
 extern void warpmode (int mode);
+extern void uae_quit ();
 
 static int l_uae_warp(lua_State *L)
 {
   write_log("l_uae_warp\n");
   warpmode (1);
+  return 0;
+}
+
+static int l_uae_quit(lua_State *L)
+{
+  uae_quit();
   return 0;
 }
 
@@ -303,6 +310,7 @@ void uae_lua_init_state(lua_State *L)
   lua_register(L, "uae_write_config", l_uae_write_config);
     
   lua_register(L, "uae_warp", l_uae_warp);
+  lua_register(L, "uae_quit", l_uae_quit);
     
   for (int i = 0; custd[i].name; i++) {
     char *s = ua(custd[i].name);
