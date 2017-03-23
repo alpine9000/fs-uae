@@ -31,6 +31,23 @@ static uae_sem_t lua_sem;
 
 extern void warpmode (int mode);
 extern void uae_quit ();
+extern void uae_reset (int, int);
+extern "C" {
+extern void fs_ml_video_screenshot(const char *path);
+}
+
+static int l_uae_reset(lua_State *L)
+{
+   uae_reset (0, 0);
+   return 0;
+}
+
+static int l_uae_screenshot(lua_State *L)
+{
+  const char* path = luaL_checkstring(L, 1);
+  fs_ml_video_screenshot(path);
+  return 0;
+}
 
 static int l_uae_warp(lua_State *L)
 {
@@ -121,7 +138,7 @@ static int l_uae_peek_symbol32(lua_State *L)
     uint32_t hi = (uint32_t) debug_peek_memory_16 (addr);    
     uint32_t value = (hi << 16) | lo;
 
-    //write_log("l_uae_peek_symbol32: %x %x %x\n", hi, lo, value);
+    //write_log("l_uae_peek_symbol32: %s %x %x %x\n", symbol, hi, lo, value);
 		      
     lua_pushinteger(L, value);
     result = 1;
@@ -305,12 +322,13 @@ void uae_lua_init_state(lua_State *L)
   lua_register(L, "uae_peek_symbol32", l_uae_peek_symbol32);
   lua_register(L, "uae_write_symbol16", l_uae_write_symbol16);
 
-
+  lua_register(L, "uae_screenshot", l_uae_screenshot);
   lua_register(L, "uae_read_config", l_uae_read_config);
   lua_register(L, "uae_write_config", l_uae_write_config);
     
   lua_register(L, "uae_warp", l_uae_warp);
   lua_register(L, "uae_quit", l_uae_quit);
+  lua_register(L, "uae_reset", l_uae_reset);  
     
   for (int i = 0; custd[i].name; i++) {
     char *s = ua(custd[i].name);
