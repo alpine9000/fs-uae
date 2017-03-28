@@ -147,6 +147,28 @@ static int l_uae_peek_symbol32(lua_State *L)
   return result;
 }
 
+static int l_uae_read_symbol32(lua_State *L)
+{
+  int result = 0;
+  
+  const char* symbol = luaL_checkstring(L, 1);
+
+  if (symbol) {
+    uae_u32 addr = debugger_symbol_address((TCHAR*)symbol);
+    
+    uint32_t lo = (uint32_t)debug_read_memory_16 (addr+2);
+    uint32_t hi = (uint32_t) debug_read_memory_16 (addr);    
+    uint32_t value = (hi << 16) | lo;
+
+    //write_log("l_uae_peek_symbol32: %s %x %x %x\n", symbol, hi, lo, value);
+		      
+    lua_pushinteger(L, value);
+    result = 1;
+  }
+
+  return result;
+}
+
 static int l_uae_peek_symbol16(lua_State *L)
 {
   int result = 0;
@@ -156,7 +178,25 @@ static int l_uae_peek_symbol16(lua_State *L)
   if (symbol) {
     uae_u32 addr = debugger_symbol_address((TCHAR*)symbol);
     
-    uint16_t value = (uint16_t)debug_peek_memory_16 (addr+2);
+    uint16_t value = (uint16_t)debug_peek_memory_16 (addr);
+		      
+    lua_pushinteger(L, value);
+    result = 1;
+  }
+
+  return result;
+}
+
+static int l_uae_read_symbol16(lua_State *L)
+{
+  int result = 0;
+  
+  const char* symbol = luaL_checkstring(L, 1);
+
+  if (symbol) {
+    uae_u32 addr = debugger_symbol_address((TCHAR*)symbol);
+    
+    uint16_t value = (uint16_t)debug_read_memory_16 (addr);
 		      
     lua_pushinteger(L, value);
     result = 1;
@@ -319,7 +359,9 @@ void uae_lua_init_state(lua_State *L)
   lua_register(L, "uae_write_u8", l_uae_write_u8);
   lua_register(L, "uae_write_u16", l_uae_write_u16);
   lua_register(L, "uae_peek_symbol16", l_uae_peek_symbol16);
+  lua_register(L, "uae_read_symbol16", l_uae_read_symbol16);  
   lua_register(L, "uae_peek_symbol32", l_uae_peek_symbol32);
+  lua_register(L, "uae_read_symbol32", l_uae_read_symbol32);  
   lua_register(L, "uae_write_symbol16", l_uae_write_symbol16);
 
   lua_register(L, "uae_screenshot", l_uae_screenshot);
