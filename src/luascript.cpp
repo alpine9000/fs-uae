@@ -34,6 +34,7 @@ extern void uae_quit ();
 extern void uae_reset (int, int);
 extern "C" {
 extern void fs_ml_video_screenshot(const char *path);
+extern void fs_emu_pause(int pause);
 }
 
 static int l_uae_reset(lua_State *L)
@@ -46,6 +47,13 @@ static int l_uae_screenshot(lua_State *L)
 {
   const char* path = luaL_checkstring(L, 1);
   fs_ml_video_screenshot(path);
+  return 0;
+}
+
+static int l_uae_pause(lua_State *L)
+{
+  int pause = luaL_checkint(L, 1);  
+  fs_emu_pause(pause);
   return 0;
 }
 
@@ -158,6 +166,40 @@ static int l_uae_peek_symbol32(lua_State *L)
     //write_log("l_uae_peek_symbol32: %s %x %x %x\n", symbol, hi, lo, value);
 		      
     lua_pushinteger(L, value);
+    result = 1;
+  }
+
+  return result;
+}
+
+
+static int l_uae_peek_string(lua_State *L)
+{
+  int result = 0;
+  
+  const char* symbol = luaL_checkstring(L, 1);
+
+  if (symbol) {
+    uae_u32 addr = debugger_symbol_address((TCHAR*)symbol);
+    
+    uint32_t lo = (uint32_t)debug_peek_memory_16 (addr+2);
+    uint32_t hi = (uint32_t) debug_peek_memory_16 (addr);    
+    uint32_t address = (hi << 16) | lo;
+
+    char* string = (char*)calloc(64, 1);
+
+    for (int i = 0; i < 63; i++) {
+      char c = (char)debug_read_memory_8(address);
+      address++;
+      if (c == 0) {
+	break;
+      }
+      string[i] = c;
+    }
+    
+    //write_log("l_uae_peek_symbol32: %s %x %x %x\n", symbol, hi, lo, value);
+		      
+    lua_pushstring(L, string);
     result = 1;
   }
 
@@ -378,10 +420,12 @@ void uae_lua_init_state(lua_State *L)
   lua_register(L, "uae_peek_symbol16", l_uae_peek_symbol16);
   lua_register(L, "uae_read_symbol16", l_uae_read_symbol16);  
   lua_register(L, "uae_peek_symbol32", l_uae_peek_symbol32);
-  lua_register(L, "uae_read_symbol32", l_uae_read_symbol32);  
+  lua_register(L, "uae_read_symbol32", l_uae_read_symbol32);
+  lua_register(L, "uae_peek_string", l_uae_peek_string);      
   lua_register(L, "uae_write_symbol16", l_uae_write_symbol16);
   lua_register(L, "uae_write_symbol32", l_uae_write_symbol32);  
 
+  lua_register(L, "uae_pause", l_uae_pause);  
   lua_register(L, "uae_screenshot", l_uae_screenshot);
   lua_register(L, "uae_read_config", l_uae_read_config);
   lua_register(L, "uae_write_config", l_uae_write_config);
