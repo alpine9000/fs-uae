@@ -2,8 +2,9 @@
 #include "config.h"
 #endif
 
-#define FS_EMU_INTERNAL
+#define FSE_INTERNAL_API
 #include <fs/emu.h>
+#include <fs/emu/audio.h>
 #include <fs/emu/benchmark.h>
 #include <fs/emu/input.h>
 #include <fs/emu/options.h>
@@ -51,6 +52,23 @@ int g_fs_emu_full_sync_allowed = 1;
 int g_fs_emu_emulation_thread_running = 0;
 int g_fs_emu_emulation_thread_stopped = 0;
 static fs_thread *g_emulation_thread = NULL;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void fs_emu_disable_throttling() {
     g_fs_emu_throttling = 0;
@@ -179,6 +197,7 @@ void fs_emu_set_pause_function(fs_emu_pause_function function)
 
 static void read_config(void)
 {
+    fse_log("[FSE] Read config\n");
     char *string_result;
 
     int fullscreen = fs_config_get_boolean(OPTION_FULLSCREEN);
@@ -204,50 +223,49 @@ static void read_config(void)
 
 void fs_emu_fatal(const char *msg)
 {
-    fs_emu_log("FATAL: %s\n", msg);
+    fse_log("FATAL: %s\n", msg);
     printf("FATAL: %s\n", msg);
     exit(1);
 }
 
 static int g_pause_mode = 0;
 
-void fs_emu_pause(int pause) {
+void fs_emu_pause(int pause)
+{
     if (pause == g_pause_mode) {
         return;
     }
     if (g_pause_function == NULL) {
-        fs_emu_log("no pause function set");
+        fse_log("no pause function set");
         return;
     }
-    fs_emu_log("fs_menu_pause %d\n", pause);
+    fse_log("fs_menu_pause %d\n", pause);
     //fs_emu_grab_input(g_pause_mode == 1);
     g_pause_mode = pause;
     g_pause_function(pause);
 }
 
-int fs_emu_is_paused() {
+int fs_emu_is_paused()
+{
     return g_pause_mode == 1;
 }
 
-/*
-void fs_emu_set_config(GKeyFile* config) {
-    g_fs_emu_config = config;
-}
-*/
-
-void fs_emu_acquire_gui_lock() {
+void fs_emu_acquire_gui_lock()
+{
     fs_mutex_lock(g_gui_mutex);
     g_gui_mutex_locked = 1;
 }
 
-void fs_emu_assert_gui_lock() {
+void fs_emu_assert_gui_lock()
+{
     if (!g_gui_mutex_locked) {
         fs_log("ERROR: gui mutex is not locked\n");
         exit(1);
     }
 }
 
-void fs_emu_release_gui_lock() {
+void fs_emu_release_gui_lock()
+{
     g_gui_mutex_locked = 0;
     fs_mutex_unlock(g_gui_mutex);
 }
@@ -255,52 +273,47 @@ void fs_emu_release_gui_lock() {
 void fs_emu_volume_control(int volume)
 {
     if (volume == -1) {
-        if (fs_emu_audio_muted(FS_EMU_AUDIO_MASTER)) {
-            fs_emu_audio_set_muted(FS_EMU_AUDIO_MASTER, 0);
-            if (fs_emu_audio_volume(FS_EMU_AUDIO_MASTER) == 0) {
-                fs_emu_audio_set_volume(FS_EMU_AUDIO_MASTER, 10);
+        if (fse_audio_muted(FS_EMU_AUDIO_MASTER)) {
+            fse_set_audio_muted(FS_EMU_AUDIO_MASTER, 0);
+            if (fse_audio_volume(FS_EMU_AUDIO_MASTER) == 0) {
+                fse_set_set_audio_volume(FS_EMU_AUDIO_MASTER, 10);
             }
+        } else {
+            fse_set_audio_muted(FS_EMU_AUDIO_MASTER, true);
         }
-        else {
-            fs_emu_audio_set_muted(FS_EMU_AUDIO_MASTER, true);
+    } else if (volume == -2) {
+        int volume = MAX(0, fse_audio_volume(FS_EMU_AUDIO_MASTER) - 10);
+        fse_set_set_audio_volume(FS_EMU_AUDIO_MASTER, volume);
+        if (fse_audio_muted(FS_EMU_AUDIO_MASTER)) {
+            fse_set_audio_muted(FS_EMU_AUDIO_MASTER, false);
         }
-    }
-    else if (volume == -2) {
-        int volume = MAX(0, fs_emu_audio_volume(FS_EMU_AUDIO_MASTER) - 10);
-        fs_emu_audio_set_volume(FS_EMU_AUDIO_MASTER, volume);
-        if (fs_emu_audio_muted(FS_EMU_AUDIO_MASTER)) {
-            fs_emu_audio_set_muted(FS_EMU_AUDIO_MASTER, false);
-        }
-    }
-    else if (volume == -3) {
-        int volume = MIN(100, fs_emu_audio_volume(FS_EMU_AUDIO_MASTER) + 10);
-        fs_emu_audio_set_volume(FS_EMU_AUDIO_MASTER, volume);
-        if (fs_emu_audio_muted(FS_EMU_AUDIO_MASTER)) {
-            fs_emu_audio_set_muted(FS_EMU_AUDIO_MASTER, false);
+    } else if (volume == -3) {
+        int volume = MIN(100, fse_audio_volume(FS_EMU_AUDIO_MASTER) + 10);
+        fse_set_set_audio_volume(FS_EMU_AUDIO_MASTER, volume);
+        if (fse_audio_muted(FS_EMU_AUDIO_MASTER)) {
+            fse_set_audio_muted(FS_EMU_AUDIO_MASTER, false);
         }
     }
-
-    if (fs_emu_audio_muted(FS_EMU_AUDIO_MASTER)) {
-        fs_emu_notification(1418909137, _("Volume: Muted"));
+    if (fse_audio_muted(FS_EMU_AUDIO_MASTER)) {
+        fse_notify(1418909137, _("Volume: Muted"));
     } else {
-        fs_emu_notification(1418909137, _("Volume: %d%%"),
-                fs_emu_audio_volume(FS_EMU_AUDIO_MASTER));
+        fse_notify(1418909137, _("Volume: %d%%"),
+                fse_audio_volume(FS_EMU_AUDIO_MASTER));
     }
 }
 
-void fs_emu_init(void)
+void fse_init_early(void)
 {
-    fs_log("fs_emu_init\n");
-    //if (!g_fs_emu_config) {
-    //    g_fs_emu_config = g_key_file_new();
-    //}
-    fs_time_init();
+    FSE_INIT_ONCE();
+    fs_log("[FSE] Init (early)\n");
 
-    if (fs_config_get_boolean("stdout") == 1) {
+    fs_init_time();
+
+    if (fs_config_true(OPTION_STDOUT)) {
         fs_log_enable_stdout();
     }
 
-    fs_emu_log("calling fs_ml_init\n");
+    fs_log("[FSE] Calling fs_ml_init\n");
     fs_ml_init();
 
 #ifdef WITH_LUA
@@ -308,202 +321,166 @@ void fs_emu_init(void)
 #endif
 
     g_gui_mutex = fs_mutex_create();
-    fs_emu_hud_init();
-    fs_emu_dialog_init();
-
+    fse_init_hud_early();
+    // fs_emu_dialog_init();
 }
 
-void fs_emu_init_2(int options) {
-    fs_log("fs_emu_init_2\n");
+void fse_init(int options)
+{
+    FSE_INIT_ONCE();
+    fse_init_early();
+    fs_log("[FSE] Init\n");
+    read_config();
 
 #ifdef USE_SDL
-    fs_emu_log("initializing SDL\n");
+    fse_log("[FSE] Initializing SDL\n");
     SDL_Init(SDL_INIT_EVERYTHING);
 #endif
 
-    fs_emu_hud_init_after_config();
+    fse_init_hud_after_config();
 
-    fs_emu_theme_init();
+    fse_init_theme();
 
 #ifdef WITH_NETPLAY
     //g_random_set_seed(time(NULL));
-    fs_emu_netplay_init();
+    fse_init_netplay();
 #endif
 
-#ifdef FS_EMU_DRIVERS
-    fs_emu_video_init();
+#ifdef FSE_DRIVERS
+    fse_init_video();
 #else
     if (options & FS_EMU_INIT_VIDEO) {
-        fs_emu_video_init();
+        fse_init_video();
     }
 
-    fs_emu_init_render();
+    fse_init_renderer();
 #endif
 
-    // these must (currently) be called after renderer has been initialized,
-    // due to a mutex that must be initialized first
+    /* These must (currently) be called after renderer has been initialized,
+     * due to a mutex that must be initialized first. */
     fs_emu_set_overlay_state(FS_EMU_TOP_LEFT_OVERLAY, 1);
     fs_emu_set_overlay_state(FS_EMU_TOP_RIGHT_OVERLAY, 1);
     fs_emu_set_overlay_state(FS_EMU_BOTTOM_RIGHT_OVERLAY, 1);
     fs_emu_set_overlay_state(FS_EMU_BOTTOM_LEFT_OVERLAY, 1);
 
-// #ifdef FS_EMU_DRIVERS_XXX
-// #else
-    fs_emu_log("calling fs_ml_init_2\n");
+    fse_log("[FSE] Calling fs_ml_init_2\n");
     fs_ml_init_2();
     fs_ml_set_quit_function(on_quit);
 
-    fs_emu_log("read config\n");
-    read_config();
-// #endif
-
     if (options & FS_EMU_INIT_INPUT) {
-        fs_emu_input_init();
-#ifdef FS_EMU_DRIVERS
-        fs_emu_input_init_2();
-#endif
+        fse_init_input();
     }
     if (options & FS_EMU_INIT_AUDIO) {
-        fs_emu_audio_init();
+        fse_init_audio();
     }
-
-#ifdef FS_EMU_DRIVERS
-
-#else
-    fs_ml_video_set_update_function(fs_emu_video_update_function);
-    fs_ml_video_set_render_function(fs_emu_video_render_function);
-    fs_ml_video_set_post_render_function(fs_emu_video_after_update);
-
-    if (options & FS_EMU_INIT_VIDEO) {
-        char *title;
-        if (fs_emu_get_title()) {
-            title = g_strdup(fs_emu_get_title());
-        }
-        else {
-            title = g_strdup("Emulator");
-        }
-        if (fs_emu_get_sub_title() && fs_emu_get_sub_title()[0] != '\0') {
-            char *temp = title;
-            // using 'MIDDLE DOT' (U+00B7) in UTF-8 format as separator
-            title = g_strdup_printf("%s %c%c %s", temp, 0xC2, 0xB7,
-                    fs_emu_get_sub_title());
-            free(temp);
-        }
-        fs_ml_video_create_window(title);
-        free(title);
-    }
-#endif
 }
 
-int fs_emu_thread_running() {
+int fs_emu_thread_running(void)
+{
     return g_fs_emu_emulation_thread_running;
 }
 
-static void *emulation_thread_entry(void *data) {
-    fs_emu_log("emulation thread started\n");
-    g_fs_emu_emulation_thread_running = 1;
 #ifdef WINDOWS
+static void set_windows_thread_priority(void)
+{
     if (SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL)) {
-        fs_emu_log("thread priority set to THREAD_PRIORITY_ABOVE_NORMAL\n");
-    }
-    else {
+        fse_log("FSE] Thread priority set to THREAD_PRIORITY_ABOVE_NORMAL\n");
+    } else {
         int dwError = GetLastError();
-        fs_emu_log("Failed to set thread priority (%d)\n", dwError);
+        fse_log("[FSE] Failed to set thread priority (%d)\n", dwError);
     }
+}
 #endif
 
+static void *emulation_thread(void *data)
+{
+    fse_log("[FSE] Emulation thread started\n");
+#ifdef WINDOWS
+    set_windows_thread_priority();
+#endif
 #ifdef WITH_NETPLAY
     if (fs_emu_netplay_enabled()) {
-        fs_emu_log("netplay is enabled - waiting for connection\n");
+        fse_log("[NETPLAY] Enabled - waiting for connection...\n");
         while (!fs_emu_netplay_connected()) {
-            // waiting for connection
+            /* Waiting for connection... */
             fs_emu_msleep(10);
             if (!fs_emu_netplay_enabled()) {
-                // net play mode was aborted
-                fs_emu_log("netplay aborted\n");
+                /* Net play mode was aborted. */
+                fse_log("netplay aborted\n");
                 break;
             }
         }
     }
 #endif
-
+    g_fs_emu_emulation_thread_running = 1;
     void (*main_function)() = data;
     if (main_function) {
-        fs_emu_log("main function at %p\n", data);
+        fse_log("[FSE] Run main function at %p\n", data);
         main_function();
+    } else {
+        fs_emu_fatal("[FSE] NULL pointer main function\n");
     }
-    else {
-        fs_emu_fatal("main function is NULL pointer\n");
-    }
-
-    // call fs_ml_quit in case the quit was not explicitly requested already
+    /* Call fs_ml_quit in case quit was not explicitly requested already. */
     fs_ml_quit();
-
     g_fs_emu_emulation_thread_running = 0;
-
-    // with this set, and fs_ml_quit being called, the frame render
-    // function will call fs_ml_stop when the fadeout effect is done
+    /* With this set, and fs_ml_quit being called, the frame render
+     * function will call fs_ml_stop when the fadeout effect is done. */
     g_fs_emu_emulation_thread_stopped = 1;
-
-    //fs_emu_log("calling fs_ml_stop because emulation thread has ended\n");
-    //fs_ml_stop();
     return NULL;
 }
 
-int fs_emu_run(fs_emu_main_function function) {
-    fs_emu_log("fs_emu_run, main_function at %p\n", function);
+int fs_emu_run(fs_emu_main_function function)
+{
+    fse_log("[FSE] fs_emu_run, main_function at %p\n", function);
 
-    // FIXME: should wait until we are certain that the video thread is
-    // running (i.e. wait for a status / flag)
+    /* FIXME: should wait until we are certain that the video thread is
+     * running (i.e. wait for a status / flag). */
 
 #ifdef WITH_NETPLAY
     // FIXME: MOVE
     if (fs_emu_netplay_enabled()) {
-        fs_log("netplay is enabled\n");
+        fs_log("[FSE] Netplay is enabled\n");
         fs_emu_netplay_start();
     }
 #endif
 
     g_emulation_thread = fs_thread_create(
-                "emulation", emulation_thread_entry, function);
+                "emulation", emulation_thread, function);
     if (g_emulation_thread == NULL) {
-        fs_emu_log("error starting video thread\n");
+        fse_log("[FSE] Error starting emulation thread\n");
         // FIXME: ERROR MESSAGE HERE
         // FIXME: FATAL
     }
 
-#ifdef FS_EMU_DRIVERS
-    int result = fs_emu_main_loop();
-#else
-    int result = fs_ml_main_loop();
-#endif
-    fs_emu_log("fs_emu_run: main loop is done\n");
+    int result = fse_main_loop();
+    fse_log("[FSE] fs_emu_run: main loop is done\n");
 
     if (g_fs_emu_benchmark_start_time) {
         int64_t t2 = fs_emu_monotonic_time();
         double ttime = ((t2 - g_fs_emu_benchmark_start_time) / 1000000.0);
         double sys_fps = g_fs_emu_total_sys_frames / ttime;
         double emu_fps = g_fs_emu_total_emu_frames / ttime;
-        fs_log("average fps sys: %0.1f emu: %0.1f\n", sys_fps, emu_fps);
+        fs_log("[FSE] Average fps sys: %0.1f emu: %0.1f\n", sys_fps, emu_fps);
     }
 
-    fs_emu_log("fs_emu_run: waiting for emulation thread to stop\n");
+    fse_log("[FSE] Waiting for emulation thread to stop...\n");
     while (g_fs_emu_emulation_thread_running) {
         fs_emu_msleep(1);
     }
-    fs_emu_log("fs_emu_run: emulation thread stopped\n");
+    fse_log("[FSE] Emulation thread stopped\n");
 
 #ifdef USE_SDL_AUDIO
-    fs_emu_log("fs_emu_run: calling SDL_CloseAudio\n");
+    fse_log("[FSE] fs_emu_run: calling SDL_CloseAudio\n");
     SDL_CloseAudio();
 #endif
 
     fs_emu_audio_shutdown();
-    fs_emu_log("fs_emu_run: returning\n");
+    fse_log("[FSE] Returning from fs_emu_run\n");
     return result;
 }
 
-static int wait_for_frame_no_netplay() {
+static int wait_for_frame_no_netplay(void)
+{
 #if 0
     while (1) {
         fs_ml_usleep(100 * 1000);
@@ -513,7 +490,7 @@ static int wait_for_frame_no_netplay() {
     if (g_fs_emu_benchmarking) {
         return 1;
     }
-#ifdef FS_EMU_DRIVERS
+#ifdef FSE_DRIVERS
     if (g_fs_emu_benchmark_mode) {
         return 1;
     }
@@ -560,7 +537,8 @@ static int wait_for_frame_no_netplay() {
     return 1;
 }
 
-int fs_emu_wait_for_frame(int frame) {
+int fs_emu_wait_for_frame(int frame)
+{
 #ifdef WITH_NETPLAY
     if (!fs_emu_netplay_enabled()) {
 #endif

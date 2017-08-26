@@ -2,8 +2,8 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.67])
-AC_INIT([FS-UAE], [2.9.2dev],
-        [frode@fs-uae.net], [fs-uae], [http://fs-uae.net])
+AC_INIT([FS-UAE], [2.9.6dev1],
+        [frode@fs-uae.net], [fs-uae], [https://fs-uae.net])
 AC_CONFIG_AUX_DIR([.])
 AC_CANONICAL_HOST
 AC_CONFIG_SRCDIR([src/main.cpp])
@@ -223,7 +223,7 @@ PKG_CHECK_MODULES([MIR], [mirclient], [
 ])
 
 # AC_SUBST([USE_OPENAL], [1])
-AC_DEFINE([USE_OPENAL], [1], [Define to 1 to use OpenAL])
+AC_DEFINE([WITH_OPENAL], [1], [Define to 1 to use OpenAL])
 PKG_CHECK_MODULES([OPENAL], [openal], [
 ], [
         AS_CASE([$host_os],
@@ -373,6 +373,8 @@ AS_CASE([$host_os],
     LOADABLE_MODULE_EXT=".unknown"
 ])
 
+AM_CONDITIONAL([LINUX], [test x$OS_NAME = xlinux])
+AM_CONDITIONAL([MACOS], [test x$OS_NAME = xmacos])
 AM_CONDITIONAL([WINDOWS], [test x$OS_NAME = xwindows])
 
 # Not using libtool right now, but use name LT_MODULE_EXT anyway in case
@@ -681,7 +683,7 @@ REQ_FEATURE([FILESYS], [filesys], [filesys],
             [directory hard drives])
 REQ_FEATURE([FPUEMU], [fpuemu], [fpuemu],
             [FPU emulation])
-DIS_FEATURE([FS_EMU_DRIVERS], [drivers], [drivers],
+DIS_FEATURE([FSE_DRIVERS], [drivers], [drivers],
             [multiple driver backends (experimental)])
 OPT_FEATURE([GFXBOARD], [gfxboard], [gfxboard],
             [GFX hardware boards])

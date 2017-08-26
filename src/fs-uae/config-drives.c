@@ -89,7 +89,7 @@ void fs_uae_configure_cdrom(void)
         //set_default_dirs_from_file_path(path);
         // FIXME: can possibly remove temp / ,image now
         char *temp;
-        if (fs_config_is_true("cdrom_drive_0_delay")) {
+        if (fs_config_true("cdrom_drive_0_delay")) {
             temp = g_strconcat(path, ",delay:image", NULL);
         } else {
             temp = g_strconcat(path, ",image", NULL);
@@ -477,7 +477,7 @@ void fs_uae_configure_floppies()
     int volume = fs_config_get_int_clamped(
                 OPTION_FLOPPY_DRIVE_VOLUME, 0, 100);
     if (volume == FS_CONFIG_NONE) {
-        volume = 25;
+        volume = 20;
     }
     if (volume == 0) {
         for (int i = 0; i < 4; i++) {
